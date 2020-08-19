@@ -28,8 +28,26 @@ class CryptoList extends StatefulWidget {
 class CryptoListState extends State<CryptoList> {
   //used to view favorited cryptos
   List _cryptoList;
+  //this means that the function will be executed sometime in the future (in this case does not return data)
+  Future<void> getCryptoPrices() async {
+    //async to use await, which suspends the current function, while it does other stuff and resumes when data ready
+    print('getting crypto prices'); //print
+    String _apiURL = "https://pro-api.coinmarketcap.com"; //url to get data
+    http.Response response = await http.get(_apiURL); //wait for response
+    setState(() {
+      this._cryptoList =
+          jsonDecode(response.body); //sets the state of the widget
+      print(_cryptoList);
+    });
+    return;
+  }
 
-  void _pushSaved() {}
+  @override
+  void initState() {
+    //override creation of state to allow calling of function
+    super.initState();
+    getCryptoPrices(); //this function is called which then sets the state of the app.
+  }
 
   //build method
   @override
@@ -49,4 +67,7 @@ class CryptoListState extends State<CryptoList> {
           child: new Text('my crypto app'),
         ));
   }
+
+  //how we save the favorite cryptos
+  void _pushSaved() {}
 }
