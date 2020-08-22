@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Crypto Price List',
-      theme: new ThemeData(primaryColor: Colors.orangeAccent),
+      theme: new ThemeData(primaryColor: Colors.white),
       home: CryptoList(),
     );
   }
