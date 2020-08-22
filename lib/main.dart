@@ -11,6 +11,7 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    //material app widget
     return MaterialApp(
       title: 'Crypto Price List',
       theme: new ThemeData(primaryColor: Colors.white),
@@ -37,7 +38,7 @@ class CryptoListState extends State<CryptoList> {
     setState(() {
       this._cryptoList =
           jsonDecode(response.body); //sets the state of the widget
-      print(_cryptoList);
+      print(_cryptoList); //print the list
     });
     return;
   }
