@@ -28,7 +28,7 @@ class CryptoList extends StatefulWidget {
 
 class CryptoListState extends State<CryptoList> {
   //used to view favorited cryptos
-  List _cryptoList; //store cryptolist
+  List _cryptoList = []; //store cryptolist
   final _saved = Set<Map>(); //store favorite cryptos
   final _boldStyle = new TextStyle(fontWeight: FontWeight.bold);
   bool _loading = false; //control state
@@ -42,13 +42,29 @@ class CryptoListState extends State<CryptoList> {
   //this means that the function will be executed sometime in the future (in this case does not return data)
   Future<void> getCryptoPrices() async {
     //async to use await, which suspends the current function, while it does other stuff and resumes when data ready
+    List cryptoDatas = [];
+
     print('getting crypto prices'); //print
-    String _apiURL = "https://pro-api.coinmarketcap.com"; //url to get data
-    http.Response response = await http.get(_apiURL); //wait for response
+    String _apiURL =
+        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15"; //url to get data
     setState(() {
-      this._cryptoList =
-          jsonDecode(response.body); //sets the state of the widget
-      print(_cryptoList); //print the list
+      this._loading = true;
+    });
+    http.Response response = await http.get(_apiURL, headers: {
+      "X-CMC_PRO_API_KEY": "7fcdada1-6ef8-4c7f-b199-bb7868d2c97f"
+    }); //wait for response
+
+    Map<String, dynamic> responseJSON = json.decode(response.body);
+    if (responseJSON["status"]["error_code"] == 0) {
+      for (int i = 1; i <= responseJSON["data"].length; i++) {
+        cryptoDatas.add(responseJSON["data"][i.toString()]);
+      }
+    }
+    print(cryptoDatas);
+
+    setState(() {
+      this._cryptoList = cryptoDatas;
+      this._loading = false;
     });
     return;
   }
@@ -57,7 +73,7 @@ class CryptoListState extends State<CryptoList> {
   String cryptoPrice(Map crypto) {
     int decimals = 2;
     int fac = pow(10, decimals);
-    double d = double.parse(crypto['price_usd']);
+    double d = (crypto['quote']['USD']['price']);
     return "\$" + (d = (d * fac).round() / fac).toString();
   }
 
@@ -66,6 +82,20 @@ class CryptoListState extends State<CryptoList> {
       backgroundColor: color,
       child: new Text(name[0]),
     );
+  }
+
+  _getMainBody() {
+    if (_loading) {
+      //return progress indicator if it is loading
+      return new Center(
+        child: new CircularProgressIndicator(),
+      );
+    } else {
+      return new RefreshIndicator(
+        child: _buildCryptoList(),
+        onRefresh: getCryptoPrices,
+      );
+    }
   }
 
   @override
@@ -88,14 +118,40 @@ class CryptoListState extends State<CryptoList> {
             new IconButton(icon: const Icon(Icons.list), onPressed: _pushSaved),
           ],
         ),
-        body: new Center(
-          //body of the scaffold
-          child: new Text('my crypto app'),
-        ));
+        body: _getMainBody());
   }
 
   //how we save the favorite cryptos
-  void _pushSaved() {}
+  void _pushSaved() {
+    Navigator.of(context).push(
+      new MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          final Iterable<ListTile> tiles = _saved.map(
+            (crypto) {
+              return new ListTile(
+                leading: _getLeadingWidget(crypto['name'], Colors.blue),
+                title: Text(crypto['name']),
+                subtitle: Text(
+                  cryptoPrice(crypto),
+                  style: _boldStyle,
+                ),
+              );
+            },
+          );
+          final List<Widget> divided = ListTile.divideTiles(
+            context: context,
+            tiles: tiles,
+          ).toList();
+          return new Scaffold(
+            appBar: new AppBar(
+              title: const Text('Saved Cryptos'),
+            ),
+            body: new ListView(children: divided),
+          );
+        },
+      ),
+    );
+  }
 
   //widget that builds the list
   Widget _buildCryptoList() {
